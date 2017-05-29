@@ -254,7 +254,7 @@ function moveTrucks()
 function spawnTruck(lane) //spawns a new obstacle in the desired lane.
 {
 	var tempTruck = {x:265+100*lane, y:-200, speed:8, dX:0, dY:0, image:null, inPlay:true};
-	var ranTruckImg = Math.ceil(Math.random()*4);
+	var ranTruckImg = Math.floor(Math.random()*4);
 	tempTruck.image = new Image();
 	tempTruck.image.src = truckImg[ranTruckImg];
 	var pos = 0;
@@ -314,12 +314,11 @@ function laneIsOpen(lane) //Ensures that trucks don't spawn on top of each other
 	var out = "";
 	for(var i = 0; i < trucks.length; i++)
 	{
-		out += i.toString() + ": ";
 		for(var j= 0; j < trucks[i].length; j++)
 		{
-			out += trucks[i][j].toString() + ", ";
+			out += trucks[i][j].image.src.substr(trucks[i][j].image.src.length - 11);+ " "+ i + " " + j + ", ";
 		}
-		out += trucks[i].length + ".  ";
+		out += ".  ";
 	}
 
 	log.innerHTML = out;
