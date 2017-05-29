@@ -96,11 +96,11 @@ function update()
 {
 	if(isRunning)
 	{
-		//logTruckArray();
 		trucksInPlay = countTrucksInPlay();
 		scrollBackground();
 		moveTrucks();
 		movePlayer();
+		collisionSweep();
 		render();
 	}
 	
@@ -155,7 +155,7 @@ function render()
 		drawingSurface.drawImage(images[map[row].type], map[row].x, map[row].y, 900, 150);
 	}
 	//Render player
-	drawingSurface.drawImage(player.image,player.x-SIZE/2,player.y-SIZE/2);
+	drawingSurface.drawImage(player.image,player.x,player.y);
 	//Render trucks
 	for(var i = 0; i < trucks.length; i++)
 	{
@@ -216,13 +216,13 @@ function onKeyUp(event)
 
 function movePlayer()
 {
-	if ( leftPressed == true && player.x > 325) 
+	if ( leftPressed == true && player.x > 265) 
 		player.x -= player.speed; 
-	if ( rightPressed == true && player.x < 675)
+	if ( rightPressed == true && player.x < 585)
 		player.x += player.speed;
-	if ( upPressed == true && player.y > 175)
+	if ( upPressed == true && player.y > 100)
 		player.y -= player.speed;
-	if ( downPressed == true && player.y < 675)
+	if ( downPressed == true && player.y < 600)
 		player.y += player.speed;
 }
 
@@ -309,40 +309,53 @@ function laneIsOpen(lane) //Ensures that trucks don't spawn on top of each other
 	return false;
 }
 
-/*function logTruckArray()	
+function collisionSweep()
 {
-	var out = "";
-	for(var i = 0; i < trucks.length; i++)
+	for(var lane = 0; lane < trucks.length; lane++)
 	{
-		for(var j= 0; j < trucks[i].length; j++)
+		for(var pos = 0; pos < trucks[lane].length; pos++)
 		{
-			out += trucks[i][j].image.src.substr(trucks[i][j].image.src.length - 11);+ " "+ i + " " + j + ", ";
-		}
-		out += ".  ";
-	}
-
-	log.innerHTML = out;
-
-}*/
-
-/* function collisionCheck()
-{
-	var xMin = Math.floor(player.x/SIZE);	//simple calculation to turn the ship's position into integer values that can be fed into the map array's coordinates.
-	var xMax = Math.ceil(player.x/SIZE);
-	var yMin = Math.floor(player.y/SIZE);
-	var yMax = Math.ceil(player.y/SIZE);
-	//Check each background tile that the player ship is overlapping with; if an obstacle is overlapped, end game
-	for(var row = xMin; row <= xMax; row++)
-	{
-		for(var col = yMin; col <= yMax; col++)
-		{
-			if(map[row][col].type == 1)
-			{	
-				if(map[row][col].x +100 >= player.x-50 && map[row][col].x <= player.x+50)
-					if(map[row][col].y+100 >= player.y-50 && map[row][col].y <= player.y+50)
-					isRunning = false;
-				window.alert("the ship has crashed! game over.")
+			if(collisionCheck(getBounds(player), getBounds(trucks[lane][pos])))
+			{
+				collisionLog(trucks[lane][pos]);
+				trucks[lane].splice(pos,1);
 			}
+				
 		}
 	}
-} */
+
+}
+
+ function collisionCheck(box1, box2) //This function checks two bounding boxes to see if they are colliding, by comparing box1's bounds to box2's.
+{
+	if(		(		(box1.left < box2.right && box1.left > box2.left) 
+				||  (box1.right > box2.left && box1.right < box2.right)
+			)																			//This long, overcomplicated if statement checks if the two bounding boxes intersect.
+		&&  (		(box1.bottom > box2.top && box1.bottom < box2.bottom) 
+				||  (box1.top < box2.bottom && box1.top > box2.top)		
+			)		)
+	  {
+		  console.log(box1.top + " " + box2.bottom);
+		return true;
+	  }
+	  else return false;
+}
+
+function collisionLog(hit)
+{
+	var output = "Player collided with truck at " + hit.x + ", " + hit.y + " with a bounding box ";
+	var box = getBounds(hit);
+	var boxout = "L: " + box.left + ", R: " + box.right + ", T: " + box.top + ", B: " + box.bottom;
+	output += boxout;
+	console.log(output);
+}
+function getBounds(source)
+{
+	var L = source.x - Math.floor(source.image.width/2);
+	var R = source.x + Math.ceil(source.image.width/2);
+	var T = source.y - Math.floor(source.image.height/2);
+	var B = source.y + Math.ceil(source.image.height/2);
+	var bounds = {left:L, right:R, top:T, bottom:B};
+
+	return bounds;
+}
