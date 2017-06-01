@@ -362,7 +362,7 @@ function collisionSweep()
 	{
 		for(var pos = 0; pos < trucks[lane].length; pos++)
 		{
-			if(collisionCheck(getBounds(player, 20,0), getBounds(trucks[lane][pos], 0,0)))
+			if(collisionCheck(getBounds(player, 10,0), getBounds(trucks[lane][pos], 0,0)))
 			{
 				collisionLog(trucks[lane][pos]);
 				trucks[lane].splice(pos,1);
