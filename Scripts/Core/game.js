@@ -43,6 +43,7 @@ function Initialize()  //Sets beginning values of all core variables.
 		x:475,
 		y:475,
 		speed:14,
+		HP: 4,
 		dX:0,
 		dY:0,
 		image:null	
@@ -114,14 +115,25 @@ function update()
 	if(isRunning && !paused)
 	{
 		trucksInPlay = countTrucksInPlay();
-		scrollBackground();
-		if(!freeze)
-			moveTrucks();
-		movePlayer();
-		collisionSweep();
+		if(isDead())
+		{
+			if(!freeze )
+				moveTrucks();
+			scrollBackground();
+		
+			movePlayer();
+			collisionSweep();
+		}
+		displayHP();
 		render();
 	}
 	
+}
+
+function isDead()
+{
+	if(player.HP > 0) return true;
+	else return false;
 }
 
 function trySpawnTrucks()
@@ -299,7 +311,8 @@ function spawnTruck(lane) //spawns a new obstacle in the desired lane.
 		dX:0, 
 		dY:0, 
 		image:null, 
-		inPlay:true
+		inPlay:true,
+		collidable:true
 	};
 	var ranTruckImg = Math.floor(Math.random()*4);
 	tempTruck.image = new Image();
@@ -362,10 +375,13 @@ function collisionSweep()
 	{
 		for(var pos = 0; pos < trucks[lane].length; pos++)
 		{
-			if(collisionCheck(getBounds(player, 10,0), getBounds(trucks[lane][pos], 0,0)))
+			if(trucks[lane][pos].collidable)
 			{
-				collisionLog(trucks[lane][pos]);
-				trucks[lane].splice(pos,1);
+				if(collisionCheck(getBounds(player, 10,0), getBounds(trucks[lane][pos], 0,0)))
+				{
+					player.HP--;
+					trucks[lane][pos].collidable = false;
+				}
 			}
 				
 		}
@@ -389,6 +405,11 @@ function collisionLog(hit)
 	var boxout = "L: " + box.left + ", R: " + box.right + ", T: " + box.top + ", B: " + box.bottom;
 	output += boxout;
 	console.log(output);
+}
+
+function displayHP()
+{
+	_log.innerHTML = player.HP;
 }
 
 function getBounds(source, xBuffer, yBuffer)
