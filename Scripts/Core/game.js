@@ -36,7 +36,7 @@ function Start() //Handles getting the game up and running.
 	Initialize();
 	loadImages();
 	generateBackground();
-	buildArrays();
+	buildArray();
 	window.addEventListener("keydown", onKeyDown);
 	window.addEventListener("keyup", onKeyUp);
 }	
@@ -61,9 +61,9 @@ function Initialize()  //Sets beginning values of all core variables.
 	mapSpeed = 16;
 	trucksInPlay = 0;
 	updateInterval = setInterval(update, 33.34);
-	truckSpawnInterval = setInterval(trySpawnTrucks, 200); //Every half a second, we try to spawn trucks.
-	pickupSpawnInterval = setInterval(trySpawnPickup, 300);
-	scoreGainInterval = setInterval(addScore, 33)
+	truckSpawnInterval = setInterval(trySpawnTrucks, 400); //Every half a second, we try to spawn trucks.
+	pickupSpawnInterval = setInterval(trySpawnPickup, 500);
+	scoreGainInterval = setInterval(addScore, 300);
 	leftPressed = false;
 	rightPressed = false;
 	upPressed = false;
@@ -77,12 +77,11 @@ function Initialize()  //Sets beginning values of all core variables.
 	freeze = false;
 }
 
-function buildArrays() //turns the 1D array for trucks into a 2D array.
+function buildArray() //turns the 1D array for trucks into a 2D array.
 {
 	for(var i = 0; i < 4; i++)
 	{
 		trucks[i] = [];
-		pickups[i] = [];
 	}
 }
 
@@ -172,17 +171,11 @@ function trySpawnTrucks()
 function trySpawnPickup()
 {
 	var spawned = false;
-	for(var lane = 0; lane < 4; lane++)
+	var chance = Math.random() * 100;
+	if(chance <= 20)
 	{
-		if(laneIsOpen(lane) && !spawned)	
-		{
-			var chance = Math.random() * 100;
-			if(chance <= 6)
-			{
-				spawnPickup(lane);
-				spawned = true;
-			}
-		}
+		spawnPickup();
+		spawned = true;
 	}
 }
 
@@ -214,6 +207,12 @@ function render()
 	}
 	//Render player
 	drawingSurface.drawImage(player.image,player.x,player.y);
+
+	//render pickups
+	for(var i = 0; i < pickups.length; i++)
+	{
+		drawingSurface.drawImage(pickups[i].image, pickups[i].x, pickups[i].y);
+	}
 	//Render trucks
 	for(var i = 0; i < trucks.length; i++)
 	{
@@ -223,13 +222,7 @@ function render()
 		}
 	}
 
-	for(var i = 0; i < pickups.length; i++)
-	{
-		for(var j = 0; j < pickups[i].length; j++)
-		{
-			drawingSurface.drawImage(pickups[i][j].image, pickups[i][j].x, pickups[i][j].y - 50);
-		}
-	}
+	
 }
 
 function onKeyDown(event)
@@ -340,17 +333,14 @@ function moveTrucks()
 
 function movePickups()
 {
-	for(var lane = 0; lane < pickups.length; lane++)
+	for(var i = 0; i < pickups.length; i++)
 	{
-		for(var pos = 0; pos < pickups[lane].length; pos++)
+		if(pickups[i])
 		{
-			if(pickups[lane][pos])
+			pickups[i].y += pickups[i].speed;
+			if(pickups[i].y > 900)
 			{
-				pickups[lane][pos].y += pickups[lane][pos].speed;
-				if(pickups[lane][pos].y > 900)
-				{
-					pickups[lane].splice(pos,1);
-				}
+					pickups.splice(i,1);
 			}
 		}
 	}
@@ -377,11 +367,11 @@ function spawnTruck(lane) //spawns a new obstacle in the desired lane.
 	
 }
 
-function spawnPickup(lane)
+function spawnPickup()
 {
 	var tempPickup =
 	{
-		x:170+170*lane, 
+		x:120 + Math.floor(Math.random()*610), 
 		y:-200, 
 		speed:mapSpeed, 
 		image:null,
@@ -391,7 +381,7 @@ function spawnPickup(lane)
 	tempPickup.image = new Image();
 	tempPickup.image.src = pickupImg[ranPickupImg];
 	tempPickup.type = ranPickupImg;
-	pickups[lane].push(tempPickup);
+	pickups.push(tempPickup);
 }
 
 function countTrucksInLane(lane) //Simply tallies the number of trucks in a specific designated lane.
@@ -433,13 +423,9 @@ function canSpawnTrucks()	//Simple gatekeeper function to ensure that there aren
 
 function laneIsOpen(lane) //Ensures that trucks don't spawn on top of each other.
 {
-	var noTrucks = false;
-	var noPickups = false;
 	if(trucks[lane] == null || trucks[lane][0] == null) 
-		noTrucks = true;
-	if(pickups[lane] == null || pickups[lane][0] == null)	//An empty lane is an open lane.
-		noPickups = true;
-	if(noTrucks || trucks[lane][trucks[lane].length -1].y > 150)// && (pickups[lane][pickups[lane].length -1].y > 150))
+		return true;
+	if(trucks[lane][trucks[lane].length -1].y > 150)
 		return true;
 	
 	return false;
@@ -458,8 +444,7 @@ function collisionSweep()
 					player.HP--;
 					trucks[lane][pos].collidable = false;
 				}
-			}
-				
+			}	
 		}
 	}
 
@@ -501,5 +486,5 @@ function getBounds(source, xBuffer, yBuffer)
 
 function addScore()
 {
-	score += 1;
+	score += 10;
 }
