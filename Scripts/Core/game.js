@@ -3,14 +3,14 @@ var drawingSurface;
 var _log;
 var map = [];
 var images = [];
-var imgNames = ["Assets/images/background.png", "Assets/images/temp_tr.png", "Assets/images/ch_playerCar.png"];
+var imgNames = ["Assets/images/background.png", "Assets/images/ch_playerCar.png"];
 var truckImg = ["Assets/images/ch_truck01.png","Assets/images/ch_truck02.png",
 				"Assets/images/ch_truck03.png","Assets/images/ch_truck04.png"]
 var SIZE;
 var isRunning;
 var paused;
 var player;
-var playerBounds;
+var moveBounds;
 var trucks = [];
 var mapSpeed;
 var speedMultiplier;
@@ -21,6 +21,8 @@ var downPressed;
 var trucksInPlay;
 var updateInterval;
 var truckSpawnInterval;
+var freeze;
+var cheatsEnabled;
 
 Start();
 
@@ -36,8 +38,16 @@ function Start() //Handles getting the game up and running.
 
 function Initialize()  //Sets beginning values of all core variables.
 {
-	player = {x:475, y:475, speed:10, dX:0, dY:0, image:null};
-	playerBounds = {left:125, right:660, top:100, bottom:520}
+	player = 
+	{
+		x:475,
+		y:475,
+		speed:14,
+		dX:0,
+		dY:0,
+		image:null	
+	};
+	moveBounds = {left:125, right:660, top:100, bottom:520};
 	_log = document.getElementById("log");
 	canvas = document.getElementById("canvas");
 	drawingSurface = canvas.getContext("2d");
@@ -50,9 +60,12 @@ function Initialize()  //Sets beginning values of all core variables.
 	rightPressed = false;
 	upPressed = false;
 	downPressed = false;
+	pausePressed = false;
 	speedMultiplier = 1;
 	paused = false;
 	isRunning = true;
+	cheatsEnabled = true;
+	freeze = false;
 }
 
 function buildArray() //turns the 1D array for trucks into a 2D array.
@@ -71,7 +84,7 @@ function loadImages() //turns the imageNames string array into an array of Image
 		tempImg.src = imgNames[i];
 		images.push(tempImg);
 	}
-	player.image = images[2];
+	player.image = images[1];
 }
 
 function loadTruckImg()
@@ -102,7 +115,8 @@ function update()
 	{
 		trucksInPlay = countTrucksInPlay();
 		scrollBackground();
-		moveTrucks();
+		if(!freeze)
+			moveTrucks();
 		movePlayer();
 		collisionSweep();
 		render();
@@ -128,7 +142,6 @@ function trySpawnTrucks()
 				}
 			}
 		}
-		
 	}
 }
 
@@ -165,7 +178,7 @@ function render()
 	{
 		for(var j = 0; j < trucks[i].length; j++)
 		{
-			drawingSurface.drawImage(trucks[i][j].image, trucks[i][j].x, trucks[i][j].y);
+			drawingSurface.drawImage(trucks[i][j].image, trucks[i][j].x, trucks[i][j].y - 50);
 		}
 	}
 }
@@ -193,6 +206,21 @@ function onKeyDown(event)
 		case 83:
 				if ( downPressed == false )
 				downPressed = true;
+				break;
+		case 80:		// P key, for pausing.
+				if( paused == false )
+				paused = true;
+				else
+				paused = false;
+				break;
+		case 70:		// F key, to freeze trucks in place.  For debug purposes only.
+				if(cheatsEnabled)
+				{
+					if( freeze == false )
+					freeze = true;
+					else
+					freeze = false;
+				}
 				break;
 		default:
 				console.log("Unhandled key.");
@@ -228,13 +256,13 @@ function onKeyUp(event)
 
 function movePlayer()
 {
-	if ( leftPressed == true && player.x > playerBounds.left) 
+	if ( leftPressed == true && player.x > moveBounds.left) 
 		player.x -= player.speed; 
-	if ( rightPressed == true && player.x < playerBounds.right)
+	if ( rightPressed == true && player.x < moveBounds.right)
 		player.x += player.speed;
-	if ( upPressed == true && player.y > playerBounds.top)
+	if ( upPressed == true && player.y > moveBounds.top)
 		player.y -= player.speed;
-	if ( downPressed == true && player.y < playerBounds.bottom)
+	if ( downPressed == true && player.y < moveBounds.bottom)
 		player.y += player.speed;
 }
 
@@ -251,7 +279,7 @@ function moveTrucks()
 				{
 					trucks[lane].splice(pos,1);
 				}
-				if(trucks[lane][pos].y > player.y + 100 && trucks[lane][pos].inPlay)
+				else if(trucks[lane][pos].y > player.y + 100 && trucks[lane][pos].inPlay)
 				{
 					trucks[lane][pos].inPlay = false;
 				}
@@ -259,13 +287,20 @@ function moveTrucks()
 			}
 		}
 	}
-	
-
 }
 
 function spawnTruck(lane) //spawns a new obstacle in the desired lane.
 {
-	var tempTruck = {x:140+170*lane, y:-200, speed:8, dX:0, dY:0, image:null, inPlay:true};
+	var tempTruck = 
+	{
+		x:140+170*lane, 
+		y:-200, 
+		speed:8, 
+		dX:0, 
+		dY:0, 
+		image:null, 
+		inPlay:true
+	};
 	var ranTruckImg = Math.floor(Math.random()*4);
 	tempTruck.image = new Image();
 	tempTruck.image.src = truckImg[ranTruckImg];
@@ -327,7 +362,7 @@ function collisionSweep()
 	{
 		for(var pos = 0; pos < trucks[lane].length; pos++)
 		{
-			if(collisionCheck(getBounds(player), getBounds(trucks[lane][pos])))
+			if(collisionCheck(getBounds(player, 20,0), getBounds(trucks[lane][pos], 0,0)))
 			{
 				collisionLog(trucks[lane][pos]);
 				trucks[lane].splice(pos,1);
@@ -342,7 +377,6 @@ function collisionSweep()
 {
 	if(box1.left < box2.right && box1.right > box2.left && box1.top < box2.bottom && box1.bottom > box2.top)
 	  {
-		  console.log(box1.top + " " + box2.bottom);
 		return true;
 	  }
 	  else return false;
@@ -356,12 +390,13 @@ function collisionLog(hit)
 	output += boxout;
 	console.log(output);
 }
-function getBounds(source)
+
+function getBounds(source, xBuffer, yBuffer)
 {
-	var L = source.x - Math.floor(source.image.width/2);
-	var R = source.x + Math.ceil(source.image.width/2);
-	var T = source.y - Math.floor(source.image.height/2);
-	var B = source.y + Math.ceil(source.image.height/2);
+	var L = source.x - Math.floor(source.image.width/2) + xBuffer;
+	var R = source.x + Math.ceil(source.image.width/2) - xBuffer;
+	var T = source.y - Math.floor(source.image.height/2) + yBuffer;
+	var B = source.y + Math.ceil(source.image.height/2) - yBuffer;
 	var bounds = {left:L, right:R, top:T, bottom:B};
 
 	return bounds;
