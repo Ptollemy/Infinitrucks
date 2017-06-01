@@ -218,7 +218,7 @@ function render()
 	{
 		for(var j = 0; j < trucks[i].length; j++)
 		{
-			drawingSurface.drawImage(trucks[i][j].image, trucks[i][j].x, trucks[i][j].y - 0);
+			drawingSurface.drawImage(trucks[i][j].image, trucks[i][j].x, trucks[i][j].y - 50);
 		}
 	}
 
@@ -351,7 +351,7 @@ function spawnTruck(lane) //spawns a new obstacle in the desired lane.
 	var tempTruck = 
 	{
 		x:140+170*lane, 
-		y:-200, 
+		y:-250, 
 		speed:8, 
 		dX:0, 
 		dY:0, 
