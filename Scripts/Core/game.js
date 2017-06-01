@@ -211,14 +211,14 @@ function render()
 	//render pickups
 	for(var i = 0; i < pickups.length; i++)
 	{
-		drawingSurface.drawImage(pickups[i].image, pickups[i].x, pickups[i].y);
+		drawingSurface.drawImage(pickups[i].image, pickups[i].x +25, pickups[i].y+75);
 	}
 	//Render trucks
 	for(var i = 0; i < trucks.length; i++)
 	{
 		for(var j = 0; j < trucks[i].length; j++)
 		{
-			drawingSurface.drawImage(trucks[i][j].image, trucks[i][j].x, trucks[i][j].y - 50);
+			drawingSurface.drawImage(trucks[i][j].image, trucks[i][j].x, trucks[i][j].y - 0);
 		}
 	}
 
@@ -445,6 +445,29 @@ function collisionSweep()
 					trucks[lane][pos].collidable = false;
 				}
 			}	
+		}
+	}
+
+	for(var i = 0; i < pickups.length; i++)
+	{
+		if(collisionCheck(getBounds(player,10,0), getBounds(pickups[i],10,0)))
+		{
+			getBounds(player, 10,0);
+			getBounds(pickups[i],10,10);
+
+			if(pickups[i].type == 0 && player.HP < 4)
+			{
+				player.HP++;
+				pickups.splice(i,1);
+			}
+			else if(pickups[i].type == 1)
+			{
+				score += 1000;
+				pickups.splice(i,1);
+			}
+			
+			
+			
 		}
 	}
 
