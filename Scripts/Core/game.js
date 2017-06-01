@@ -8,7 +8,9 @@ var truckImg = ["Assets/images/ch_truck01.png","Assets/images/ch_truck02.png",
 				"Assets/images/ch_truck03.png","Assets/images/ch_truck04.png"]
 var SIZE;
 var isRunning;
+var paused;
 var player;
+var playerBounds;
 var trucks = [];
 var mapSpeed;
 var speedMultiplier;
@@ -35,6 +37,7 @@ function Start() //Handles getting the game up and running.
 function Initialize()  //Sets beginning values of all core variables.
 {
 	player = {x:475, y:475, speed:10, dX:0, dY:0, image:null};
+	playerBounds = {left:125, right:660, top:100, bottom:520}
 	_log = document.getElementById("log");
 	canvas = document.getElementById("canvas");
 	drawingSurface = canvas.getContext("2d");
@@ -48,6 +51,7 @@ function Initialize()  //Sets beginning values of all core variables.
 	upPressed = false;
 	downPressed = false;
 	speedMultiplier = 1;
+	paused = false;
 	isRunning = true;
 }
 
@@ -94,7 +98,7 @@ function generateBackground() //Creates the 1D tile array for the background
 
 function update()
 {
-	if(isRunning)
+	if(isRunning && !paused)
 	{
 		trucksInPlay = countTrucksInPlay();
 		scrollBackground();
@@ -171,18 +175,22 @@ function onKeyDown(event)
 	switch(event.keyCode)
 	{
 		case 37: // Left.
+		case 65:
 				if ( leftPressed == false )
 					leftPressed = true;
 				break;
 		case 39: // Right.
+		case 68:
 				if ( rightPressed == false )
 					rightPressed = true;
 				break;
 		case 38: // Up.
+		case 87:
 				if ( upPressed == false )
 					upPressed = true;
 				break;
 		case 40: // Down.
+		case 83:
 				if ( downPressed == false )
 				downPressed = true;
 				break;
@@ -197,15 +205,19 @@ function onKeyUp(event)
 	switch(event.keyCode)
 	{
 		case 37: // Left.
+		case 65:
 				leftPressed = false;
 				break;
 		case 39: // Right.
+		case 68:
 				rightPressed = false;
 				break;
 		case 38: // Up.
+		case 87:
 				upPressed = false;
 				break;
 		case 40: // Down.
+		case 83:
 				downPressed = false;
 				break;
 		default:
@@ -216,13 +228,13 @@ function onKeyUp(event)
 
 function movePlayer()
 {
-	if ( leftPressed == true && player.x > 265) 
+	if ( leftPressed == true && player.x > playerBounds.left) 
 		player.x -= player.speed; 
-	if ( rightPressed == true && player.x < 585)
+	if ( rightPressed == true && player.x < playerBounds.right)
 		player.x += player.speed;
-	if ( upPressed == true && player.y > 100)
+	if ( upPressed == true && player.y > playerBounds.top)
 		player.y -= player.speed;
-	if ( downPressed == true && player.y < 600)
+	if ( downPressed == true && player.y < playerBounds.bottom)
 		player.y += player.speed;
 }
 
@@ -253,7 +265,7 @@ function moveTrucks()
 
 function spawnTruck(lane) //spawns a new obstacle in the desired lane.
 {
-	var tempTruck = {x:265+100*lane, y:-200, speed:8, dX:0, dY:0, image:null, inPlay:true};
+	var tempTruck = {x:140+170*lane, y:-200, speed:8, dX:0, dY:0, image:null, inPlay:true};
 	var ranTruckImg = Math.floor(Math.random()*4);
 	tempTruck.image = new Image();
 	tempTruck.image.src = truckImg[ranTruckImg];
@@ -328,12 +340,7 @@ function collisionSweep()
 
  function collisionCheck(box1, box2) //This function checks two bounding boxes to see if they are colliding, by comparing box1's bounds to box2's.
 {
-	if(		(		(box1.left < box2.right && box1.left > box2.left) 
-				||  (box1.right > box2.left && box1.right < box2.right)
-			)																			//This long, overcomplicated if statement checks if the two bounding boxes intersect.
-		&&  (		(box1.bottom > box2.top && box1.bottom < box2.bottom) 
-				||  (box1.top < box2.bottom && box1.top > box2.top)		
-			)		)
+	if(box1.left < box2.right && box1.right > box2.left && box1.top < box2.bottom && box1.bottom > box2.top)
 	  {
 		  console.log(box1.top + " " + box2.bottom);
 		return true;
